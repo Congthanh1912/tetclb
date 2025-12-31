@@ -1,0 +1,37 @@
+#countdown-screen{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  background: radial-gradient(circle at 50% 40%, #141414, #000);
+  color: #fff;
+  overflow: hidden;
+}
+
+.title{
+  font-size: 18px;
+  letter-spacing: 4px;
+  opacity: 0.8;
+  margin-bottom: 18px;
+}
+
+#clock{
+  font-size: 88px;
+  font-weight: 700;
+  letter-spacing: 6px;
+
+  color: #00ffcc;
+  text-shadow: 0 0 10px rgba(0,255,204,.6), 0 0 30px rgba(0,255,204,.4);
+}
+
+.sep{
+  opacity: 0.8;
+}
+
+.status{
+  margin-top: 14px;
+  font-size: 14px;
+  opacity: 0.75;
+}

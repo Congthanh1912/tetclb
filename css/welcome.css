@@ -1,0 +1,111 @@
+/* ===== WELCOME SCREEN FULL LAYER ===== */
+#welcome-screen{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;        /* luôn nằm trên */
+  overflow: hidden;
+  display: block;
+}
+
+/* ẩn/hiện */
+.hidden{ display:none; }
+
+/* nền */
+.welcome-bg{
+  position: absolute;
+  inset: 0;
+  background: url("../frontend/image/hinh-nen-powerpoint-tet-14-3.png") center/cover no-repeat;
+  filter: brightness(.85);
+  z-index: 1;
+}
+
+/* flash đỏ */
+.lucky-flash{
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,0,0,.35), transparent 65%);
+  opacity: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* chữ trung tâm */
+.tet-title{
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center;
+  z-index: 3;
+  user-select: none;
+}
+
+.tet-title .line1{
+  font-size: clamp(36px, 5vw, 72px);
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: #ffd966;
+  text-shadow: 0 0 10px rgba(255, 210, 90, .7);
+}
+
+.tet-title .line2{
+  margin-top: 10px;
+  font-size: clamp(42px, 6vw, 86px);
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: #fff3c4;
+  text-shadow: 0 0 14px rgba(255, 200, 80, .75), 0 0 28px rgba(180,0,0,.25);
+}
+
+.tet-title .line3{
+  margin-top: 6px;
+  font-size: clamp(28px, 4vw, 56px);
+  font-weight: 700;
+  letter-spacing: 10px;
+  color: #ff3b3b;
+  text-shadow: 0 0 12px rgba(255, 60, 60, .7);
+}
+
+/* petals layer */
+.petals{
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* 1 cánh hoa */
+.petal{
+  position:absolute;
+  top:-20px;
+  width:10px;
+  height:14px;
+  border-radius:10px 10px 10px 0;
+  background: radial-gradient(circle at 30% 30%, #ffd6d6, #ff0033 60%, #b00020);
+  opacity:.9;
+  transform: rotate(25deg);
+  animation: fall linear forwards, sway ease-in-out infinite;
+}
+
+@keyframes fall{
+  to{ transform: translateY(110vh) rotate(260deg); opacity:.2; }
+}
+@keyframes sway{
+  0%,100%{ margin-left:-12px; }
+  50%{ margin-left:12px; }
+}
+.club-logo{
+  width: 360px;           /* chỉnh to nhỏ ở đây */
+  margin: 20px auto;
+  display: block;
+
+  /* hiệu ứng nổi + sáng */
+  filter: drop-shadow(0 0 18px rgba(255, 220, 120, 0.8));
+  animation: logoFloat 3.5s ease-in-out infinite;
+}
+
+@keyframes logoFloat{
+  0%   { transform: translateY(0) scale(1); }
+  50%  { transform: translateY(-10px) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
