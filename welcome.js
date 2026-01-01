@@ -1,3 +1,4 @@
+
 const petals = document.getElementById("petals");
 
 function spawnPetal(){
@@ -21,3 +22,19 @@ setInterval(()=>{ for(let i=0;i<3;i++) spawnPetal(); }, 200);
 // setTimeout(() => {
 //   window.location.href = "./fireworks.html";
 // }, 4000);
+// ✅ preload ảnh nền rồi mới cho hiện
+const bgUrl = "/frontend/image/hinh-nen-powerpoint-tet-14-3.png"; // sửa đúng path
+
+const img = new Image();
+img.src = bgUrl;
+
+img.onload = () => {
+  document.body.classList.add("ready");
+  document.body.classList.remove("preload");
+};
+
+img.onerror = () => {
+  // lỡ sai path thì vẫn hiện chứ không kẹt màn hình đen
+  document.body.classList.add("ready");
+  document.body.classList.remove("preload");
+};

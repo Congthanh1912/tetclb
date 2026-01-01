@@ -40,7 +40,7 @@ async function syncFromServer(reason="sync"){
     const data = await res.json();
     baseServerSeconds = Number(data.totalSeconds) || 0;
     basePerfTime = performance.now();
-    elStatus.textContent = `✅ API OK | totalSeconds=${baseServerSeconds} | ${reason}`;
+    elStatus.textContent = ``;
   }catch(e){
     elStatus.textContent = `❌ API lỗi: ${e?.message || e}`;
   }
@@ -51,11 +51,16 @@ function tick(){
   const cur = getCurrentSeconds();
   renderFromSeconds(cur);
 if(cur <= 0){
-    finished = true;
-    stopAll();
+      finished = true;
+      stopAll(); 
+      
+    setTimeout(() => {
+    
+      window.location.href = "./fireworks.html";
+    }, 600); // đúng bằng thời gian fade
 
-    // ✅ chuyển sang trang welcome
-    window.location.href = "./fireworks.html";
+    // ✅ chuyển sang tranlg welcome
+    // window.location.href = "./fireworks.html";
   }
 
 }

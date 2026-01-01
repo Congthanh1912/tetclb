@@ -1,17 +1,26 @@
-/* ===== WELCOME SCREEN FULL LAYER ===== */
+
+body { background:#000; }          /* fallback */
+body.preload { opacity: 0; }       /* ẩn khi chưa load ảnh */
+body.ready { opacity: 1; transition: opacity .8s ease; }  /* hiện mượt */
+
 #welcome-screen{
+   background-color: #000;
   position: fixed;
   inset: 0;
   z-index: 9999;        /* luôn nằm trên */
   overflow: hidden;
   display: block;
 }
-
 /* ẩn/hiện */
 .hidden{ display:none; }
+body {
+  opacity: 0;
+  animation: fadeIn .8s ease forwards;
+}
 
 /* nền */
 .welcome-bg{
+   background-color: #eb1414af;
   position: absolute;
   inset: 0;
   background: url("../frontend/image/hinh-nen-powerpoint-tet-14-3.png") center/cover no-repeat;
@@ -95,17 +104,25 @@
   50%{ margin-left:12px; }
 }
 .club-logo{
-  width: 360px;           /* chỉnh to nhỏ ở đây */
+  width: 520px;           /* chỉnh to nhỏ ở đây */
   margin: 20px auto;
   display: block;
 
   /* hiệu ứng nổi + sáng */
   filter: drop-shadow(0 0 18px rgba(255, 220, 120, 0.8));
-  animation: logoFloat 3.5s ease-in-out infinite;
+  animation: logoFloat 3.0s ease-in-out infinite;
 }
 
 @keyframes logoFloat{
   0%   { transform: translateY(0) scale(1); }
   50%  { transform: translateY(-10px) scale(1.03); }
   100% { transform: translateY(0) scale(1); }
+}
+body {
+  opacity: 0;
+  animation: fadeIn .8s ease forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
 }

@@ -1,3 +1,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
 body { font-family: "Segoe UI", system-ui, Arial, sans-serif; }
+
+
+body { opacity: 1; transition: opacity .8s ease; }
+body.fadeout { opacity: 0; }

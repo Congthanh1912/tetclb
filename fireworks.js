@@ -1,5 +1,123 @@
 (() => {
   // ===== Canvas setup =====
+  function sampleTextPointsLines(lines, fontSize = 120, gap = 7, lineGap = 1.05) {
+  const c = document.createElement("canvas"); // canvas ẨN
+  const ctx = c.getContext("2d");
+
+  c.width = innerWidth;
+  c.height = innerHeight;
+
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#fff";
+  ctx.font = `900 ${fontSize}px Arial`;
+
+  const cx = c.width / 2;
+  const cy = c.height / 2;
+  const lh = fontSize * lineGap;
+
+  // vẽ nhiều dòng cho đẹp
+  const startY = cy - ((lines.length - 1) * lh) / 2;
+  lines.forEach((t, i) => ctx.fillText(t, cx, startY + i * lh));
+
+  const data = ctx.getImageData(0, 0, c.width, c.height).data;
+  const pts = [];
+
+  for (let y = 0; y < c.height; y += gap) {
+    for (let x = 0; x < c.width; x += gap) {
+      const a = data[(y * c.width + x) * 4 + 3];
+      if (a > 40) pts.push({ x, y });
+    }
+  }
+  return pts;
+}
+
+function buildTextPoints() {
+  // 2 dòng cho đẹp
+  return sampleTextPointsLines(["HAPPY", "NEW YEAR"], 120, 7);
+}
+function burstText(lines, color = "#e62c25ff") {
+  const pts = sampleTextPointsLines(lines, 160, 4);
+
+  for (const p of pts) {
+    // tạo hạt "đứng yên" tại điểm chữ
+    particles.push(
+      new Particle(
+        p.x, p.y,
+        0, 0,
+        color,
+        120,      // life
+        2.0       // size
+      )
+    );
+  }
+}
+// ===== Logo points (cache) =====
+const LOGO_URL = "./image/verticalLogo.41587655287d182bd847.png"; // sửa đúng path logo
+let logoUnitPts = null; // điểm logo chuẩn hóa (-1..1)
+
+function loadLogoUnitPoints(url) {
+  const img = new Image();
+  img.src = url;
+  img.decoding = "async";
+
+  return img.decode().then(() => {
+    // scale logo về size vừa để lấy mẫu (nhẹ máy)
+    const maxW = 220, maxH = 220;
+    const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+    const w = Math.floor(img.width * scale);
+    const h = Math.floor(img.height * scale);
+
+    const c = document.createElement("canvas");
+    const g = c.getContext("2d");
+    c.width = w; c.height = h;
+    g.clearRect(0, 0, w, h);
+    g.drawImage(img, 0, 0, w, h);
+
+    const data = g.getImageData(0, 0, w, h).data;
+    const gap = 4;              // nhỏ -> nét hơn, nặng hơn
+    const alphaTh = 40;
+
+    const pts = [];
+    for (let y = 0; y < h; y += gap) {
+      for (let x = 0; x < w; x += gap) {
+        const a = data[(y * w + x) * 4 + 3];
+        if (a > alphaTh) {
+          // chuẩn hóa về [-1..1]
+          const nx = (x - w / 2) / (w / 2);
+          const ny = (y - h / 2) / (h / 2);
+          const r = data[(y * w + x) * 4 + 0];
+          const g2 = data[(y * w + x) * 4 + 1];
+          const b = data[(y * w + x) * 4 + 2];
+
+          pts.push({
+            x: nx,
+            y: ny,
+            c: `rgb(${r},${g2},${b})`
+          });
+
+        }
+      }
+    }
+    logoUnitPts = pts;
+  }).catch(() => {
+    logoUnitPts = null; // nếu lỗi thì fallback circle
+  });
+}
+
+
+// gọi preload ngay khi load file
+loadLogoUnitPoints(LOGO_URL);
+
+
+
+
+
+
+
+
+
   const canvas = document.getElementById("fx");
   const ctx = canvas.getContext("2d", { alpha: false });
 
@@ -13,6 +131,9 @@
   }
   window.addEventListener("resize", resize);
   resize();
+setTimeout(() => {
+  burstText(["HAPPY", "NEW YEAR"], "#ffe46bff");
+}, 500);
 
   // ===== Utilities =====
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -31,6 +152,9 @@
   const sparks = [];
   let running = true;
   let finaleMode = false;
+let finalePending = false;
+let startFinaleFired = false;
+let logoExplosionAt = 0; // timestamp khi logo nổ
 
   class Particle {
     constructor(x, y, vx, vy, color, life, size) {
@@ -77,8 +201,8 @@
       this.x = x; this.y = y;
       this.tx = tx; this.ty = ty;
       this.vx = (tx - x) / 70;
-      this.vy = (ty - y) / 95;
-      this.life = 80;
+      this.vy = (ty - y) / 45;
+      this.life = 60;
       this.shape = shape;
       this.color = hslColor();
       this.trail = [];
@@ -112,15 +236,29 @@
     }
     explode() {
       const points = shapePoints(this.shape, randi(160, 280));
-      const scale = rand(80, 150) * (innerWidth / 1200 + 0.75); // size tùy màn
+     let scale = rand(60, 120) * (innerWidth / 900 + 0.75);
+if (this.shape === "logo") scale *= 1; // ✅ to hơn nhiều
+
       const baseColor = Math.random() < 0.65 ? this.color : hslColor();
 
-      for (const pt of points) {
-        const vx = pt.x * (scale / 60);
-        const vy = pt.y * (scale / 60);
-        const c = Math.random() < 0.25 ? "#fff" : baseColor;
-        particles.push(new Particle(this.x, this.y, vx, vy, c, randi(50, 90), rand(1.2, 2.4)));
+     for (const pt of points) {
+  const vx = pt.x * (scale / 60);
+  const vy = pt.y * (scale / 60);
+
+  let c;
+  if (this.shape === "logo" && pt.c) {
+    c = pt.c;                 // ✅ màu theo ảnh
+  } else {
+    c = Math.random() < 0.25 ? "#fff" : baseColor;
+  }
+
+  particles.push(new Particle(this.x, this.y, vx, vy, c, randi(70, 120), rand(1.6, 3.2)));
+}
+
+            if (this.shape === "logo") {
+        logoExplosionAt = performance.now();
       }
+
     }
   }
 
@@ -186,34 +324,26 @@
       return pts;
     }
 
-    if (name === "smile") {
-      // circle outline + eyes + smile arc
-      const ring = Math.floor(n * 0.65);
-      for (let i = 0; i < ring; i++) {
-        const a = (i / ring) * Math.PI * 2;
-        pts.push({ x: Math.cos(a), y: Math.sin(a) });
-      }
-      // eyes
-      const eyePts = Math.floor(n * 0.12);
-      for (let i = 0; i < eyePts; i++) {
-        const a = (i / eyePts) * Math.PI * 2;
-        pts.push({ x: -0.35 + Math.cos(a) * 0.08, y: -0.2 + Math.sin(a) * 0.08 });
-        pts.push({ x:  0.35 + Math.cos(a) * 0.08, y: -0.2 + Math.sin(a) * 0.08 });
-      }
-      // smile arc
-      const arcPts = n - ring - eyePts * 2;
-      for (let i = 0; i < arcPts; i++) {
-        const a = Math.PI * 0.15 + (i / Math.max(1, arcPts - 1)) * Math.PI * 0.7;
-        pts.push({ x: Math.cos(a) * 0.6, y: 0.25 + Math.sin(a) * 0.35 });
-      }
-      return pts;
-    }
+  if (name === "logo") {
+  if (!logoUnitPts || logoUnitPts.length === 0) return shapePoints("circle", n);
+
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const p = logoUnitPts[(Math.random() * logoUnitPts.length) | 0];
+    pts.push({ x: p.x, y: p.y, c: p.c });  // ✅ lấy màu từ cache
+  }
+  return pts;
+}
+
+
+
+    
 
     // fallback circle
     return shapePoints("circle", n);
   }
 
-  const shapePool = ["heart", "smile", "flower", "circle", "star"];
+  const shapePool = ["heart", "flower", "circle", "star","logo"];
 
   // ===== Firework spawning =====
   function launchRandom() {
@@ -225,6 +355,18 @@
     const shape = pick(shapePool);
     rockets.push(new Rocket(x, y, tx, ty, shape));
   }
+function launchLogoCenter() {
+  const x = innerWidth / 2;          // bắn từ giữa đáy lên cho “chuẩn”
+  const y = innerHeight + 10;
+
+  const tx = innerWidth / 2;         // nổ đúng trung tâm
+  const ty = innerHeight * 0.38;
+
+  const r = new Rocket(x, y, tx, ty, "logo");
+  r.life = 38;                       // cho nó tới điểm nổ nhanh hơn (để kịp trước finale)
+  r.color = "#ffffff";               // màu logo (bạn đổi được)
+  rockets.push(r);
+}
 
   // ===== Finale: huge white screen burst =====
   function startFinale() {
@@ -245,11 +387,11 @@
     }
 
     // white wash overlay using a timed fade
-    whiteFlash = 2.0;
+    whiteFlash =1;
 
-    // show network after a moment
-    setTimeout(showNetwork, 1400);
+    
   }
+
 
   // ===== Render loop =====
   let whiteFlash = 0;
@@ -285,12 +427,26 @@
     // flash white overlay
     if (whiteFlash > 0) {
       ctx.globalAlpha = Math.min(1, whiteFlash);
-      ctx.fillStyle = "#5ccad8ff";
+      ctx.fillStyle = "#e72c2cff";
       ctx.fillRect(0, 0, innerWidth, innerHeight);
       ctx.globalAlpha = 1;
       whiteFlash *= 0.92;
       if (whiteFlash < 0.02) whiteFlash = 0;
     }
+    // ✅ chỉ bắn pháo đỏ khi logo đã nổ và đã có thời gian "show" đủ
+if (finalePending && !startFinaleFired) {
+  const waited = performance.now() - logoExplosionAt;
+
+  // nếu logo chưa nổ thì chưa được bắn finale
+  if (logoExplosionAt > 0) {
+    // đợi logo hiện rõ 2.5s rồi mới bắn pháo đỏ
+    if (waited > 2500) {
+      startFinale();
+      startFinaleFired = true;
+      finalePending = false;
+    }
+  }
+}
 
     requestAnimationFrame(step);
   }
@@ -300,13 +456,10 @@
   const startTime = performance.now();
   let launchTimer = setInterval(() => {
     launchRandom();
-    if (Math.random() < 0.5) launchRandom();
-  if (Math.random() < 0.65) launchRandom();
+
+  if (Math.random() < 0.85) launchRandom();
   if (Math.random() < 0.75) launchRandom();
-  if (Math.random() < 0.65) launchRandom();
-   if (Math.random() < 0.50) launchRandom();
-   if (Math.random() < 0.70) launchRandom();
-}, 1550);
+}, 540);
 
   setTimeout(() => {
     clearInterval(launchTimer);
@@ -315,10 +468,27 @@
     const fast = setInterval(() => {
       launchRandom(); launchRandom();
       burst++;
-      if (burst >= 6) { clearInterval(fast); startFinale(); }
-    }, 280);
-  }, 15000);
+      if (burst === 4) {launchLogoCenter();}
+      if (burst >=6) { clearInterval(fast); finalePending = true; startFinale();  }
+    
+    }, 200);
+  }, 15400);
   step();
 
-  setTimeout(() => window.location.href = "./welcome.html", 19500);
+const SHOW_MS = 18000;      // thời gian bắn
+const FADE_MS = 1000;        // thời gian fade
+setTimeout(() => {
+  document.body.classList.add("fadeout");
+
+  // đợi browser render 1 frame cho chắc
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      window.location.href = "./welcome.html";
+    }, FADE_MS);
+  });
+}, SHOW_MS - FADE_MS);
+
+
+
+ 
 })();
